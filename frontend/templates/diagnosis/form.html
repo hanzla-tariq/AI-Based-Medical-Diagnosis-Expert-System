@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% block title %}Form Diagnosis - ShifaBot{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Page Header -->
+            <div class="mb-4">
+                <h2 class="fw-bold text-dark"><i class="bi bi-clipboard2-pulse me-2 gradient-text"></i>Form-Based Diagnosis</h2>
+                <p class="text-muted">Fill in the details below and our AI will analyze your symptoms</p>
+            </div>
+
+            <!-- Diagnosis Form -->
+            <div class="card-shifabot">
+                <div class="card-body">
+                    <form id="diagnosisForm" class="diagnosis-form" novalidate>
+                        <div class="row g-3">
+                            <!-- Age & Gender -->
+                            <div class="col-md-6">
+                                <label for="age" class="form-label">Age <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="age" min="0" max="150" placeholder="Enter your age" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="gender" class="form-label">Gender <span class="text-danger">*</span></label>
+                                <select class="form-select" id="gender" required>
+                                    <option value="">Select gender</option>
+                                    <option value="male">Male</option>
+                                    <option value="female">Female</option>
+                                    <option value="other">Other</option>
+                                </select>
+                            </div>
+
+                            <!-- Symptoms -->
+                            <div class="col-12">
+                                <label for="symptoms" class="form-label">Symptoms <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="symptoms" rows="4" placeholder="Describe your symptoms in detail. The more information you provide, the more accurate the analysis will be." required></textarea>
+                            </div>
+
+                            <!-- Duration & Severity -->
+                            <div class="col-md-6">
+                                <label for="duration" class="form-label">Duration of Symptoms <span class="text-danger">*</span></label>
+                                <select class="form-select" id="duration" required>
+                                    <option value="">Select duration</option>
+                                    <option value="Less than 1 day">Less than 1 day</option>
+                                    <option value="1-3 days">1-3 days</option>
+                                    <option value="4-7 days">4-7 days</option>
+                                    <option value="1-2 weeks">1-2 weeks</option>
+                                    <option value="2-4 weeks">2-4 weeks</option>
+                                    <option value="1-3 months">1-3 months</option>
+                                    <option value="More than 3 months">More than 3 months</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="severity" class="form-label">Severity Level <span class="text-danger">*</span></label>
+                                <select class="form-select" id="severity" required>
+                                    <option value="">Select severity</option>
+                                    <option value="mild">Mild - Slight discomfort, can function normally</option>
+                                    <option value="moderate">Moderate - Noticeable discomfort, some limitation</option>
+                                    <option value="severe">Severe - Significant pain, major limitation</option>
+                                </select>
+                            </div>
+
+                            <!-- Medical History -->
+                            <div class="col-12">
+                                <label for="medicalHistory" class="form-label">Medical History <small class="text-muted">(optional)</small></label>
+                                <textarea class="form-control" id="medicalHistory" rows="3" placeholder="List any existing medical conditions, allergies, current medications, or previous surgeries..."></textarea>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 d-flex gap-3">
+                            <button type="submit" class="btn btn-primary-shifa" id="submitBtn">
+                                <i class="bi bi-cpu me-2"></i>Analyze Symptoms
+                            </button>
+                            <a href="{{ url_for('dashboard.dashboard_page') }}" class="btn btn-outline-secondary" style="border-radius:50px;">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultSection" style="display:none;" class="fade-in">
+                <div class="result-panel">
+                    <h4><i class="bi bi-clipboard-check"></i> AI Analysis Results</h4>
+
+                    <!-- Possible Conditions -->
+                    <div class="result-section" id="conditionsSection">
+                        <h6><i class="bi bi-list-check me-2"></i>Possible Conditions</h6>
+                        <ul id="conditionsList"></ul>
+                    </div>
+
+                    <!-- Detailed Analysis -->
+                    <div class="result-section" id="analysisSection" style="display:none;">
+                        <h6><i class="bi bi-info-circle me-2"></i>Detailed Analysis</h6>
+                        <p id="analysisText" class="mb-0"></p>
+                    </div>
+
+                    <!-- Medication Recommendations -->
+                    <div class="result-section">
+                        <h6><i class="bi bi-capsule me-2"></i>Medication Recommendations</h6>
+                        <ul id="medicationList" class="mb-0"></ul>
+                    </div>
+
+                    <!-- Food Recommendations -->
+                    <div class="result-section">
+                        <h6><i class="bi bi-egg-fried me-2"></i>Food & Diet Recommendations</h6>
+                        <ul id="foodList" class="mb-0"></ul>
+                    </div>
+
+                    <!-- Lifestyle -->
+                    <div class="result-section" id="lifestyleSection" style="display:none;">
+                        <h6><i class="bi bi-heart-pulse me-2"></i>Lifestyle Recommendations</h6>
+                        <ul id="lifestyleList" class="mb-0"></ul>
+                    </div>
+
+                    <!-- Warning Signs -->
+                    <div class="result-section" id="warningSection" style="display:none;">
+                        <h6><i class="bi bi-exclamation-triangle me-2 text-warning"></i>Warning Signs</h6>
+                        <ul id="warningList"></ul>
+                    </div>
+
+                    <!-- Disclaimer -->
+                    <div class="report-disclaimer mt-3">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <span id="disclaimerText">This is an AI-generated analysis and should not replace professional medical advice. Please consult a healthcare provider for proper diagnosis and treatment.</span>
+                    </div>
+
+                    <!-- Actions -->
+                    <div class="d-flex gap-3 mt-4 flex-wrap">
+                        <a id="viewReportBtn" href="#" class="btn btn-primary-shifa" target="_blank">
+                            <i class="bi bi-file-earmark-medical me-2"></i>View Full Report
+                        </a>
+                        <button onclick="document.getElementById('resultSection').style.display='none'; document.getElementById('diagnosisForm').reset();" class="btn btn-outline-secondary" style="border-radius:50px;">
+                            <i class="bi bi-arrow-repeat me-2"></i>New Diagnosis
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('diagnosisForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const data = {
+        age: document.getElementById('age').value,
+        gender: document.getElementById('gender').value,
+        symptoms: document.getElementById('symptoms').value.trim(),
+        duration: document.getElementById('duration').value,
+        severity: document.getElementById('severity').value,
+        medical_history: document.getElementById('medicalHistory').value.trim()
+    };
+
+    // Validate
+    if (!data.age || !data.gender || !data.symptoms || !data.duration || !data.severity) {
+        showToast('Please fill in all required fields.', true);
+        return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Analyzing...';
+    showSpinner('Analyzing your symptoms with AI...');
+
+    try {
+        const result = await apiCall('/api/diagnosis/form', 'POST', data);
+        hideSpinner();
+
+        if (result.data.success) {
+            const analysis = result.data.result;
+            const consultationId = result.data.consultation_id;
+
+            // Display conditions
+            if (analysis.possible_conditions && analysis.possible_conditions.length > 0) {
+                document.getElementById('conditionsList').innerHTML =
+                    analysis.possible_conditions.map(c => `<li>${c}</li>`).join('');
+                document.getElementById('conditionsSection').style.display = 'block';
+            }
+
+            // Display analysis
+            if (analysis.analysis) {
+                document.getElementById('analysisText').textContent = analysis.analysis;
+                document.getElementById('analysisSection').style.display = 'block';
+            }
+
+            // Helper to render array or string as bullet list
+            function renderBullets(elementId, data) {
+                const el = document.getElementById(elementId);
+                if (!el) return;
+                let items = [];
+                if (Array.isArray(data)) {
+                    items = data;
+                } else if (typeof data === 'string') {
+                    items = data.split('\n').map(s => s.replace(/^[-\u2022*]\s*/, '').trim()).filter(Boolean);
+                    if (items.length <= 1) items = [data];
+                }
+                el.innerHTML = items.map(i => `<li>${i}</li>`).join('');
+            }
+
+            // Display medication
+            if (analysis.medication_recommendations) {
+                renderBullets('medicationList', analysis.medication_recommendations);
+            }
+
+            // Display food
+            if (analysis.food_recommendations) {
+                renderBullets('foodList', analysis.food_recommendations);
+            }
+
+            // Display lifestyle
+            if (analysis.lifestyle_recommendations) {
+                renderBullets('lifestyleList', analysis.lifestyle_recommendations);
+                document.getElementById('lifestyleSection').style.display = 'block';
+            }
+
+            // Display warning signs
+            if (analysis.warning_signs && analysis.warning_signs.length > 0) {
+                document.getElementById('warningList').innerHTML =
+                    analysis.warning_signs.map(w => `<li>${w}</li>`).join('');
+                document.getElementById('warningSection').style.display = 'block';
+            }
+
+            // Disclaimer
+            if (analysis.disclaimer) {
+                document.getElementById('disclaimerText').textContent = analysis.disclaimer;
+            }
+
+            // Report link
+            document.getElementById('viewReportBtn').href = `/reports/${consultationId}`;
+
+            // Show results
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('resultSection').scrollIntoView({ behavior: 'smooth' });
+            showToast('Diagnosis completed successfully!');
+        } else {
+            showToast(result.data.message || 'Analysis failed.', true);
+        }
+    } catch (err) {
+        hideSpinner();
+        showToast('An error occurred. Please try again.', true);
+    }
+
+    btn.disabled = false;
+    btn.innerHTML = '<i class="bi bi-cpu me-2"></i>Analyze Symptoms';
+});
+</script>
+{% endblock %}

@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Login - ShifaBot{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card fade-in">
+        <div class="logo-wrapper">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ShifaBot">
+        </div>
+        <h3>Welcome Back</h3>
+        <p class="subtitle">Sign in to access your health dashboard</p>
+
+        <form id="loginForm" novalidate>
+            <div class="mb-3">
+                <label for="email" class="form-label fw-semibold">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border:2px solid var(--gray-200); border-right:none; border-radius:var(--radius) 0 0 var(--radius);">
+                        <i class="bi bi-envelope text-muted"></i>
+                    </span>
+                    <input type="email" class="form-control border-start-0" id="email" placeholder="you@example.com" required style="border-left:none;">
+                </div>
+                <div class="invalid-feedback" id="emailError"></div>
+            </div>
+
+            <div class="mb-4">
+                <label for="password" class="form-label fw-semibold">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border:2px solid var(--gray-200); border-right:none; border-radius:var(--radius) 0 0 var(--radius);">
+                        <i class="bi bi-lock text-muted"></i>
+                    </span>
+                    <input type="password" class="form-control border-start-0" id="password" placeholder="Enter your password" required style="border-left:none;">
+                </div>
+                <div class="invalid-feedback" id="passwordError"></div>
+            </div>
+
+            <button type="submit" class="btn btn-auth" id="loginBtn">
+                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+            </button>
+        </form>
+
+        <div class="text-center mt-4">
+            <p class="text-muted mb-0">Don't have an account? <a href="{{ url_for('auth.signup_page') }}" class="fw-semibold">Create Account</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const btn = document.getElementById('loginBtn');
+
+    // Reset errors
+    document.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.form-control').forEach(el => el.classList.remove('is-invalid'));
+
+    // Validate
+    if (!email) {
+        document.getElementById('email').classList.add('is-invalid');
+        document.getElementById('emailError').textContent = 'Email is required.';
+        document.getElementById('emailError').style.display = 'block';
+        return;
+    }
+    if (!password) {
+        document.getElementById('password').classList.add('is-invalid');
+        document.getElementById('passwordError').textContent = 'Password is required.';
+        document.getElementById('passwordError').style.display = 'block';
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Signing in...';
+
+    try {
+        const { status, data } = await apiCall('/api/auth/login', 'POST', { email, password });
+
+        if (data.success) {
+            showToast('Login successful! Redirecting...');
+            const redirect = (data.user && data.user.role === 'admin') ? '/admin' : '/dashboard';
+            setTimeout(() => { window.location.href = redirect; }, 1000);
+        } else {
+            showToast(data.message || 'Login failed.', true);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Sign In';
+        }
+    } catch (err) {
+        showToast('An error occurred. Please try again.', true);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-box-arrow-in-right me-2"></i>Sign In';
+    }
+});
+</script>
+{% endblock %}

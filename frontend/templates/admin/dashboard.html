@@ -1,0 +1,198 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Admin Dashboard - ShifaBot{% endblock %}
+
+{% block admin_content %}
+<!-- Page Header -->
+<div class="admin-page-header">
+    <h2><i class="bi bi-speedometer2 me-2"></i>Dashboard</h2>
+    <p>Welcome back, {{ current_user.name }}. Here's your system overview.</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-teal"><i class="bi bi-people-fill"></i></div>
+            <div class="stat-info">
+                <h3 id="statUsers">--</h3>
+                <span>Total Users</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-blue"><i class="bi bi-clipboard2-pulse"></i></div>
+            <div class="stat-info">
+                <h3 id="statConsultations">--</h3>
+                <span>Total Consultations</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-cyan"><i class="bi bi-file-earmark-medical"></i></div>
+            <div class="stat-info">
+                <h3 id="statReports">--</h3>
+                <span>Reports Generated</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="stat-icon bg-amber"><i class="bi bi-cpu"></i></div>
+            <div class="stat-info">
+                <h3 id="statAI">--</h3>
+                <span>AI Requests</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 1 -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-8">
+        <div class="chart-card">
+            <h5><i class="bi bi-graph-up me-2"></i>Daily Diagnoses (Last 30 Days)</h5>
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="chart-card">
+            <h5><i class="bi bi-pie-chart me-2"></i>Age Group Distribution</h5>
+            <canvas id="ageChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row 2 -->
+<div class="row g-3">
+    <div class="col-12">
+        <div class="chart-card">
+            <h5><i class="bi bi-bar-chart me-2"></i>Most Common Symptoms</h5>
+            <canvas id="symptomsChart"></canvas>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    loadDashboardStats();
+    loadDailyChart();
+    loadAgeChart();
+    loadSymptomsChart();
+});
+
+function loadDashboardStats() {
+    fetch('/admin/api/admin/stats')
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                document.getElementById('statUsers').textContent = data.stats.total_users.toLocaleString();
+                document.getElementById('statConsultations').textContent = data.stats.total_consultations.toLocaleString();
+                document.getElementById('statReports').textContent = data.stats.total_reports.toLocaleString();
+                document.getElementById('statAI').textContent = data.stats.total_ai_requests.toLocaleString();
+            }
+        })
+        .catch(err => console.error('Stats load error:', err));
+}
+
+function loadDailyChart() {
+    fetch('/admin/api/admin/analytics/daily-diagnoses')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const ctx = document.getElementById('dailyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Diagnoses',
+                        data: data.values,
+                        borderColor: '#0d9488',
+                        backgroundColor: 'rgba(13,148,136,0.1)',
+                        borderWidth: 2.5,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#0d9488',
+                        pointRadius: 4,
+                        pointHoverRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                        x: { ticks: { maxRotation: 45 } }
+                    }
+                }
+            });
+        });
+}
+
+function loadAgeChart() {
+    fetch('/admin/api/admin/analytics/age-groups')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const ctx = document.getElementById('ageChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.values,
+                        backgroundColor: [
+                            '#0d9488', '#06b6d4', '#3b82f6', '#f59e0b', '#ef4444'
+                        ],
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { padding: 16, usePointStyle: true } }
+                    }
+                }
+            });
+        });
+}
+
+function loadSymptomsChart() {
+    fetch('/admin/api/admin/analytics/symptoms')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) return;
+            const ctx = document.getElementById('symptomsChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Occurrences',
+                        data: data.values,
+                        backgroundColor: 'rgba(13,148,136,0.7)',
+                        borderColor: '#0d9488',
+                        borderWidth: 1,
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    indexAxis: 'y',
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { beginAtZero: true, ticks: { stepSize: 1 } }
+                    }
+                }
+            });
+        });
+}
+</script>
+{% endblock %}

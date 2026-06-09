@@ -1,0 +1,209 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Manage Consultations - ShifaBot Admin{% endblock %}
+
+{% block admin_content %}
+<!-- Page Header -->
+<div class="admin-page-header">
+    <h2><i class="bi bi-clipboard2-pulse me-2"></i>Consultation Management</h2>
+    <p>View and manage all diagnosis sessions across all users.</p>
+</div>
+
+<!-- Consultations Table Card -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h4>All Consultations</h4>
+        <div class="admin-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="consultSearch" placeholder="Search by patient, symptom, or date..." oninput="debounceConsultSearch(this)">
+        </div>
+    </div>
+    <div class="table-responsive-admin">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Patient</th>
+                    <th>Age/Gender</th>
+                    <th>Symptoms</th>
+                    <th>Mode</th>
+                    <th>Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="consultTableBody">
+                <tr>
+                    <td colspan="7">
+                        <div class="table-spinner">
+                            <div class="spinner-border" role="status"></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Consultation Detail Modal -->
+<div class="modal fade modal-admin" id="consultModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-clipboard2-pulse me-2"></i>Consultation Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="consultModalBody">
+                <div class="table-spinner"><div class="spinner-border"></div></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    loadConsultations();
+});
+
+let consultTimer;
+function debounceConsultSearch(input) {
+    clearTimeout(consultTimer);
+    consultTimer = setTimeout(() => loadConsultations(input.value), 350);
+}
+
+function loadConsultations(query) {
+    const url = query ? '/admin/api/admin/consultations?q=' + encodeURIComponent(query) : '/admin/api/admin/consultations';
+    const tbody = document.getElementById('consultTableBody');
+    tbody.innerHTML = '<tr><td colspan="7"><div class="table-spinner"><div class="spinner-border"></div></div></td></tr>';
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || data.consultations.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="bi bi-inbox"></i><p>No consultations found.</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.consultations.map(c => `
+                <tr>
+                    <td>${c.id}</td>
+                    <td><strong>${esc(c.patient_name)}</strong><br><small class="text-muted">${esc(c.patient_email)}</small></td>
+                    <td>${c.age} / ${esc(c.gender)}</td>
+                    <td>${esc(c.symptoms.substring(0, 60))}${c.symptoms.length > 60 ? '...' : ''}</td>
+                    <td><span class="badge-mode badge bg-${c.mode === 'chatbot' ? 'info' : 'primary'}">${c.mode}</span></td>
+                    <td>${formatDate(c.created_at)}</td>
+                    <td>
+                        <button class="btn-action btn-action-view" title="View" onclick="viewConsultation(${c.id})"><i class="bi bi-eye"></i></button>
+                        <button class="btn-action btn-action-delete" title="Delete" onclick="deleteConsultation(${c.id})"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(() => {
+            tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Error loading consultations.</p></div></td></tr>';
+        });
+}
+
+function viewConsultation(id) {
+    const body = document.getElementById('consultModalBody');
+    body.innerHTML = '<div class="table-spinner"><div class="spinner-border"></div></div>';
+    new bootstrap.Modal(document.getElementById('consultModal')).show();
+
+    fetch('/admin/api/admin/consultations/' + id)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { body.innerHTML = '<p>Consultation not found.</p>'; return; }
+            const c = data.consultation;
+            let condHTML = '';
+            if (c.conditions && c.conditions.length > 0) {
+                condHTML = '<ul>' + c.conditions.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>';
+            } else {
+                condHTML = '<em>No conditions recorded</em>';
+            }
+            let medHTML = '';
+            if (c.medication_items && c.medication_items.length > 0) {
+                medHTML = '<ul>' + c.medication_items.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>';
+            } else {
+                medHTML = '<em>None</em>';
+            }
+            let foodHTML = '';
+            if (c.food_items && c.food_items.length > 0) {
+                foodHTML = '<ul>' + c.food_items.map(x => `<li>${esc(x)}</li>`).join('') + '</ul>';
+            } else {
+                foodHTML = '<em>None</em>';
+            }
+            body.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="detail-label">Patient</div>
+                        <div class="detail-value">${esc(c.patient_name)}<br><small class="text-muted">${esc(c.patient_email)}</small></div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="detail-label">Age</div>
+                        <div class="detail-value">${c.age}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="detail-label">Gender</div>
+                        <div class="detail-value">${esc(c.gender)}</div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="detail-label">Mode</div>
+                        <div class="detail-value"><span class="badge bg-${c.mode === 'chatbot' ? 'info' : 'primary'}">${c.mode}</span></div>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="detail-label">Date</div>
+                        <div class="detail-value">${formatDateFull(c.created_at)}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Symptoms</div>
+                        <div class="detail-value">${esc(c.symptoms)}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="detail-label">Duration</div>
+                        <div class="detail-value">${esc(c.duration)}</div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="detail-label">Severity</div>
+                        <div class="detail-value"><span class="badge bg-${c.severity === 'severe' ? 'danger' : c.severity === 'moderate' ? 'warning' : 'secondary'}">${esc(c.severity)}</span></div>
+                    </div>
+                    <div class="col-12">
+                        <div class="detail-label">Medical History</div>
+                        <div class="detail-value">${esc(c.medical_history || 'None')}</div>
+                    </div>
+                    <div class="col-12"><hr></div>
+                    <div class="col-12">
+                        <div class="detail-label">AI - Possible Conditions</div>
+                        <div class="detail-value">${condHTML}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Medication Recommendations</div>
+                        <div class="detail-value">${medHTML}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="detail-label">Food / Diet Recommendations</div>
+                        <div class="detail-value">${foodHTML}</div>
+                    </div>
+                </div>
+            `;
+        });
+}
+
+function deleteConsultation(id) {
+    if (!confirm('Permanently delete this consultation record?')) return;
+    fetch('/admin/api/admin/consultations/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadConsultations(document.getElementById('consultSearch').value);
+            } else {
+                showToast(data.message, 'danger');
+            }
+        });
+}
+</script>
+{% endblock %}

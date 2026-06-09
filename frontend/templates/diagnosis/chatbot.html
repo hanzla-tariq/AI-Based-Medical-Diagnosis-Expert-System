@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Chat with ShifaBot{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Chatbot Container -->
+            <div class="chatbot-container fade-in">
+                <!-- Header -->
+                <div class="chatbot-header">
+                    <div class="avatar">
+                        <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ShifaBot" style="width:32px; height:32px; border-radius:50%;">
+                    </div>
+                    <div class="chat-info">
+                        <h5>ShifaBot Assistant</h5>
+                        <small><i class="bi bi-circle-fill text-success me-1" style="font-size:0.5rem;"></i>Online - Ready to help</small>
+                    </div>
+                    <div class="ms-auto">
+                        <button class="btn btn-sm text-white" style="opacity:0.7;" onclick="resetChat()" title="Reset conversation">
+                            <i class="bi bi-arrow-clockwise"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Messages -->
+                <div class="chat-messages" id="chatMessages">
+                    <!-- Welcome message -->
+                    <div class="message bot">
+                        <div class="bubble">
+                            Hello! I'm <strong>ShifaBot</strong>, your AI medical assistant. I'm here to help you understand your symptoms and provide health recommendations.<br><br>
+                            To get started, please tell me: <strong>What symptoms are you experiencing?</strong>
+                        </div>
+                        <span class="timestamp">Just now</span>
+                    </div>
+                </div>
+
+                <!-- Typing Indicator -->
+                <div class="typing-indicator" id="typingIndicator" style="margin: 0 1.5rem;">
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                    <span class="dot"></span>
+                </div>
+
+                <!-- Input Area -->
+                <div class="chat-input-area">
+                    <textarea id="chatInput" rows="1" placeholder="Type your message here..." onkeydown="handleKeyDown(event)"></textarea>
+                    <button class="btn-send" id="sendBtn" onclick="sendMessage()">
+                        <i class="bi bi-send-fill"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Finalize Button (hidden initially) -->
+            <div id="finalizeSection" class="text-center mt-3" style="display:none;">
+                <button class="btn btn-primary-shifa btn-lg" id="finalizeBtn" onclick="finalizeDiagnosis()">
+                    <i class="bi bi-clipboard2-check me-2"></i>Generate Full Diagnosis Report
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>
+{% endblock %}

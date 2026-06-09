@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link href="{{ url_for('static', filename='css/admin.css') }}" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="admin-wrapper">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar" id="adminSidebar">
+        <div class="sidebar-header">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ShifaBot" class="sidebar-logo">
+            <h5 class="sidebar-brand">ShifaBot</h5>
+            <small class="text-accent">Admin Panel</small>
+        </div>
+        <nav class="sidebar-nav">
+            <a href="{{ url_for('admin.dashboard_page') }}"
+               class="sidebar-link {% if request.path == '/admin/' or request.path == '/admin' %}active{% endif %}">
+                <i class="bi bi-speedometer2"></i>
+                <span>Dashboard</span>
+            </a>
+            <a href="{{ url_for('admin.users_page') }}"
+               class="sidebar-link {% if '/admin/users' in request.path %}active{% endif %}">
+                <i class="bi bi-people-fill"></i>
+                <span>Users</span>
+            </a>
+            <a href="{{ url_for('admin.consultations_page') }}"
+               class="sidebar-link {% if '/admin/consultations' in request.path %}active{% endif %}">
+                <i class="bi bi-clipboard2-pulse"></i>
+                <span>Consultations</span>
+            </a>
+            <a href="{{ url_for('admin.reports_page') }}"
+               class="sidebar-link {% if '/admin/reports' in request.path %}active{% endif %}">
+                <i class="bi bi-file-earmark-medical"></i>
+                <span>Reports</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <a href="{{ url_for('index') }}" class="sidebar-link">
+                <i class="bi bi-arrow-left-circle"></i>
+                <span>Back to Site</span>
+            </a>
+            <a href="{{ url_for('auth.logout') }}" class="sidebar-link text-danger">
+                <i class="bi bi-box-arrow-right"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
+    <!-- Mobile Topbar -->
+    <div class="admin-mobile-topbar">
+        <button class="btn btn-sm btn-outline-light" id="sidebarToggle" onclick="toggleSidebar()">
+            <i class="bi bi-list fs-4"></i>
+        </button>
+        <span class="fw-bold">Admin Panel</span>
+        <span class="ms-auto small">{{ current_user.name }}</span>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="admin-content">
+        {% block admin_content %}{% endblock %}
+    </div>
+</div>
+
+<!-- Sidebar overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

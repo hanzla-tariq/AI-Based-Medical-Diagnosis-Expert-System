@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Medical Report - ShifaBot{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    {% if error %}
+        <div class="text-center py-5">
+            <i class="bi bi-exclamation-circle text-danger" style="font-size:3rem;"></i>
+            <h4 class="mt-3 text-danger">{{ error }}</h4>
+            <a href="{{ url_for('dashboard.dashboard_page') }}" class="btn btn-primary-shifa mt-3">Back to Dashboard</a>
+        </div>
+    {% else %}
+    <!-- Action Buttons (hidden in print) -->
+    <div class="report-actions mb-4 no-print" style="border:none; padding:0; justify-content:flex-start;">
+        <a href="{{ url_for('dashboard.dashboard_page') }}" class="btn btn-outline-secondary" style="border-radius:50px;">
+            <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+        </a>
+        <div class="ms-auto d-flex gap-2 flex-wrap">
+            <button onclick="window.print()" class="btn btn-outline-primary" style="border-radius:50px;">
+                <i class="bi bi-printer me-2"></i>Print Report
+            </button>
+            <a href="/reports/{{ consultation.id }}/pdf" class="btn btn-primary-shifa">
+                <i class="bi bi-download me-2"></i>Download PDF
+            </a>
+        </div>
+    </div>
+
+    <!-- Report Container -->
+    <div class="report-container fade-in">
+        <!-- Header -->
+        <div class="report-header">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ShifaBot">
+            <h2>ShifaBot Medical Report</h2>
+            <p class="mb-0 opacity-75">AI-Powered Diagnosis & Recommendations</p>
+        </div>
+
+        <!-- Body -->
+        <div class="report-body">
+            <!-- Report Meta -->
+            <div class="report-section">
+                <h5><i class="bi bi-info-circle"></i> Report Information</h5>
+                <div class="report-info-grid">
+                    <div class="report-info-item">
+                        <label>Report ID</label>
+                        <span>#{{ consultation.id }}</span>
+                    </div>
+                    <div class="report-info-item">
+                        <label>Date & Time</label>
+                        <span>{{ consultation.created_at.strftime('%B %d, %Y at %I:%M %p') }}</span>
+                    </div>
+                    <div class="report-info-item">
+                        <label>Diagnosis Mode</label>
+                        <span class="badge bg-{{ 'primary' if consultation.mode == 'form' else 'info' }} rounded-pill">{{ consultation.mode|title }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Patient Details -->
+            <div class="report-section">
+                <h5><i class="bi bi-person"></i> Patient Details</h5>
+                <div class="report-info-grid">
+                    <div class="report-info-item">
+                        <label>Patient Name</label>
+                        <span>{{ user.name }}</span>
+                    </div>
+                    <div class="report-info-item">
+                        <label>Email</label>
+                        <span>{{ user.email }}</span>
+                    </div>
+                    <div class="report-info-item">
+                        <label>Age</label>
+                        <span>{{ consultation.age }} years</span>
+                    </div>
+                    <div class="report-info-item">
+                        <label>Gender</label>
+                        <span>{{ consultation.gender|title }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Symptoms -->
+            <div class="report-section">
+                <h5><i class="bi bi-clipboard2-pulse"></i> Symptom Details</h5>
+                <div class="report-info-grid">
+                    <div class="report-info-item" style="grid-column: 1 / -1;">
+                        <label>Symptoms</label>
+                        <span>{{ consultation.symptoms }}</span>
+                    </div>
+                    <div class="report-info-item">
+                        <label>Duration</label>
+                        <span>{{ consultation.duration }}</span>
+                    </div>
+                    <div class="report-info-item">
+                        <label>Severity</label>
+                        <span class="badge bg-{{ 'danger' if consultation.severity == 'severe' else 'warning text-dark' if consultation.severity == 'moderate' else 'success' }} rounded-pill">
+                            {{ consultation.severity|title }}
+                        </span>
+                    </div>
+                </div>
+                {% if consultation.medical_history %}
+                <div class="mt-3">
+                    <label class="d-block" style="font-size:0.8rem; font-weight:600; color:var(--gray-500); text-transform:uppercase; letter-spacing:0.5px;">Medical History</label>
+                    <span class="fw-semibold">{{ consultation.medical_history }}</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- AI Analysis - Possible Conditions -->
+            {% if conditions %}
+            <div class="report-section">
+                <h5><i class="bi bi-list-check"></i> Possible Conditions Identified</h5>
+                <ol class="mb-0">
+                    {% for condition in conditions %}
+                        <li class="mb-2">{{ condition }}</li>
+                    {% endfor %}
+                </ol>
+            </div>
+            {% endif %}
+
+            <!-- Medication Recommendations -->
+            <div class="report-section">
+                <h5><i class="bi bi-capsule"></i> Medication Recommendations</h5>
+                {% if medication_items %}
+                <ul class="mb-0">
+                    {% for item in medication_items %}
+                        <li class="mb-1">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">No medication recommendations available.</p>
+                {% endif %}
+            </div>
+
+            <!-- Food & Diet Recommendations -->
+            <div class="report-section">
+                <h5><i class="bi bi-egg-fried"></i> Food & Diet Recommendations</h5>
+                {% if food_items %}
+                <ul class="mb-0">
+                    {% for item in food_items %}
+                        <li class="mb-1">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="mb-0">No food recommendations available.</p>
+                {% endif %}
+            </div>
+
+            <!-- Disclaimer -->
+            <div class="report-disclaimer">
+                <strong><i class="bi bi-exclamation-triangle me-1"></i> Medical Disclaimer:</strong><br>
+                This report is generated by an AI system (ShifaBot) and is intended for informational purposes only.
+                It should <strong>NOT</strong> be used as a substitute for professional medical advice, diagnosis, or treatment.
+                Always seek the advice of your physician or other qualified health provider with any questions regarding a medical condition.
+            </div>
+        </div>
+
+        <!-- Footer Actions -->
+        <div class="report-actions no-print">
+            <button onclick="window.print()" class="btn btn-outline-primary">
+                <i class="bi bi-printer me-2"></i>Print
+            </button>
+            <a href="/reports/{{ consultation.id }}/pdf" class="btn btn-primary-shifa">
+                <i class="bi bi-download me-2"></i>Download PDF
+            </a>
+            <a href="{{ url_for('history.history_page') }}" class="btn btn-outline-secondary">
+                <i class="bi bi-clock-history me-2"></i>View History
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/report.js') }}"></script>
+{% endblock %}

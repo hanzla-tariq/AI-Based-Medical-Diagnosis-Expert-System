@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - ShifaBot{% endblock %}
+
+{% block content %}
+<!-- Dashboard Header -->
+<section class="dashboard-header">
+    <div class="container">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div>
+                <h2 class="fw-bold mb-1">Welcome back, {{ current_user.name }}!</h2>
+                <p class="mb-0 opacity-75">Here's your health overview</p>
+            </div>
+            <div>
+                <a href="{{ url_for('diagnosis.form_page') }}" class="btn btn-hero btn-sm px-4 py-2" style="font-size:0.95rem;">
+                    <i class="bi bi-plus-circle me-2"></i>New Diagnosis
+                </a>
+            </div>
+        </div>
+    </div>
+</section>
+
+<div class="container" style="margin-top: 2rem; padding-bottom: 3rem;">
+    <!-- Stats Cards -->
+    <div class="row g-4 mb-4" id="statsRow">
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon primary"><i class="bi bi-clipboard2-pulse"></i></div>
+                <div class="stat-value" id="totalConsultations">-</div>
+                <div class="stat-label">Total Consultations</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon success"><i class="bi bi-file-text"></i></div>
+                <div class="stat-value" id="formConsultations">-</div>
+                <div class="stat-label">Form Diagnoses</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon info"><i class="bi bi-chat-dots"></i></div>
+                <div class="stat-value" id="chatbotConsultations">-</div>
+                <div class="stat-label">Chatbot Diagnoses</div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-lg-3">
+            <div class="stat-card">
+                <div class="stat-icon warning"><i class="bi bi-calendar-check"></i></div>
+                <div class="stat-value" id="lastDate" style="font-size:1rem;">-</div>
+                <div class="stat-label">Last Consultation</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-lightning-charge me-2 text-warning"></i>Quick Actions</h5>
+    <div class="row g-4 mb-5">
+        <div class="col-md-4">
+            <a href="{{ url_for('diagnosis.form_page') }}" class="quick-action-card">
+                <div class="action-icon"><i class="bi bi-clipboard2-pulse"></i></div>
+                <h6 class="fw-bold">Form-Based Diagnosis</h6>
+                <p class="text-muted small mb-0">Fill in your symptoms and get an instant AI analysis</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ url_for('diagnosis.chatbot_page') }}" class="quick-action-card">
+                <div class="action-icon"><i class="bi bi-chat-square-dots"></i></div>
+                <h6 class="fw-bold">Chat with ShifaBot</h6>
+                <p class="text-muted small mb-0">Have a conversation to describe your condition</p>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="{{ url_for('history.history_page') }}" class="quick-action-card">
+                <div class="action-icon"><i class="bi bi-clock-history"></i></div>
+                <h6 class="fw-bold">View History</h6>
+                <p class="text-muted small mb-0">Browse all your past consultations and reports</p>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Consultations -->
+    <h5 class="fw-bold mb-3 text-dark"><i class="bi bi-clock me-2 text-primary"></i>Recent Consultations</h5>
+    <div class="card-shifabot">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead style="background:var(--gray-50);">
+                        <tr>
+                            <th class="ps-4 py-3">Date</th>
+                            <th>Symptoms</th>
+                            <th>Severity</th>
+                            <th>Mode</th>
+                            <th class="pe-4 text-end">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="recentTableBody">
+                        <tr>
+                            <td colspan="5" class="text-center py-4 text-muted">
+                                <i class="bi bi-hourglass-split me-2"></i>Loading...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    try {
+        const { data } = await apiCall('/api/dashboard/stats', 'GET');
+
+        if (data.success) {
+            const stats = data.stats;
+            document.getElementById('totalConsultations').textContent = stats.total_consultations;
+            document.getElementById('formConsultations').textContent = stats.form_consultations;
+            document.getElementById('chatbotConsultations').textContent = stats.chatbot_consultations;
+            document.getElementById('lastDate').textContent = stats.last_consultation_date;
+
+            const tbody = document.getElementById('recentTableBody');
+            if (data.recent_consultations.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="text-center py-4 text-muted">
+                            <i class="bi bi-clipboard-x me-2"></i>No consultations yet. Start your first diagnosis!
+                        </td>
+                    </tr>`;
+            } else {
+                tbody.innerHTML = data.recent_consultations.map(c => `
+                    <tr>
+                        <td class="ps-4">${formatDate(c.created_at)}</td>
+                        <td>${c.symptoms.length > 50 ? c.symptoms.substring(0, 50) + '...' : c.symptoms}</td>
+                        <td><span class="badge bg-${c.severity === 'severe' ? 'danger' : c.severity === 'moderate' ? 'warning' : 'success'}">${c.severity}</span></td>
+                        <td><span class="badge bg-${c.mode === 'form' ? 'primary' : 'info'}">${c.mode}</span></td>
+                        <td class="pe-4 text-end">
+                            <a href="/reports/${c.id}" class="btn btn-sm btn-outline-primary" style="border-radius:50px;">
+                                <i class="bi bi-eye me-1"></i>View Report
+                            </a>
+                        </td>
+                    </tr>
+                `).join('');
+            }
+        }
+    } catch (err) {
+        console.error('Failed to load dashboard stats:', err);
+    }
+});
+</script>
+{% endblock %}

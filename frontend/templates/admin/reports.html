@@ -1,0 +1,112 @@
+{% extends "admin/base_admin.html" %}
+
+{% block title %}Manage Reports - ShifaBot Admin{% endblock %}
+
+{% block admin_content %}
+<!-- Page Header -->
+<div class="admin-page-header">
+    <h2><i class="bi bi-file-earmark-medical me-2"></i>Report Management</h2>
+    <p>View, download, and manage all generated medical reports.</p>
+</div>
+
+<!-- Reports Table Card -->
+<div class="admin-card">
+    <div class="admin-card-header">
+        <h4>All Reports</h4>
+        <div class="admin-search">
+            <i class="bi bi-search"></i>
+            <input type="text" id="reportSearch" placeholder="Search by patient or date..." oninput="debounceReportSearch(this)">
+        </div>
+    </div>
+    <div class="table-responsive-admin">
+        <table class="admin-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Patient</th>
+                    <th>Age/Gender</th>
+                    <th>Mode</th>
+                    <th>Generated</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="reportTableBody">
+                <tr>
+                    <td colspan="6">
+                        <div class="table-spinner">
+                            <div class="spinner-border" role="status"></div>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{{ super() }}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    loadReports();
+});
+
+let reportTimer;
+function debounceReportSearch(input) {
+    clearTimeout(reportTimer);
+    reportTimer = setTimeout(() => loadReports(input.value), 350);
+}
+
+function loadReports(query) {
+    const url = query ? '/admin/api/admin/reports?q=' + encodeURIComponent(query) : '/admin/api/admin/reports';
+    const tbody = document.getElementById('reportTableBody');
+    tbody.innerHTML = '<tr><td colspan="6"><div class="table-spinner"><div class="spinner-border"></div></div></td></tr>';
+
+    fetch(url)
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || data.reports.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="bi bi-inbox"></i><p>No reports found.</p></div></td></tr>';
+                return;
+            }
+            tbody.innerHTML = data.reports.map(r => `
+                <tr>
+                    <td>${r.id}</td>
+                    <td><strong>${esc(r.patient_name)}</strong><br><small class="text-muted">${esc(r.patient_email)}</small></td>
+                    <td>${r.age} / ${esc(r.gender)}</td>
+                    <td><span class="badge-mode badge bg-${r.mode === 'chatbot' ? 'info' : 'primary'}">${r.mode}</span></td>
+                    <td>${formatDate(r.created_at)}</td>
+                    <td>
+                        <button class="btn-action btn-action-view" title="View Report" onclick="window.open('/reports/${r.id}', '_blank')"><i class="bi bi-eye"></i></button>
+                        <button class="btn-action btn-action-success" title="Download PDF" onclick="window.location.href='/admin/reports/${r.id}/pdf'"><i class="bi bi-download"></i></button>
+                        <button class="btn-action btn-action-edit" title="Print" onclick="printReport(${r.id})"><i class="bi bi-printer"></i></button>
+                        <button class="btn-action btn-action-delete" title="Delete" onclick="deleteReport(${r.id})"><i class="bi bi-trash"></i></button>
+                    </td>
+                </tr>
+            `).join('');
+        })
+        .catch(() => {
+            tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><i class="bi bi-exclamation-triangle"></i><p>Error loading reports.</p></div></td></tr>';
+        });
+}
+
+function printReport(id) {
+    const w = window.open('/reports/' + id, '_blank');
+    w.addEventListener('load', () => w.print());
+}
+
+function deleteReport(id) {
+    if (!confirm('Permanently delete this report and its consultation data?')) return;
+    fetch('/admin/api/admin/reports/' + id, { method: 'DELETE' })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success) {
+                showToast(data.message, 'success');
+                loadReports(document.getElementById('reportSearch').value);
+            } else {
+                showToast(data.message, 'danger');
+            }
+        });
+}
+</script>
+{% endblock %}

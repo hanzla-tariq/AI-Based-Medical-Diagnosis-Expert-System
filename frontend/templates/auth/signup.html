@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block title %}Sign Up - ShifaBot{% endblock %}
+
+{% block content %}
+<div class="auth-wrapper">
+    <div class="auth-card fade-in">
+        <div class="logo-wrapper">
+            <img src="{{ url_for('static', filename='img/logo.png') }}" alt="ShifaBot">
+        </div>
+        <h3>Create Your Account</h3>
+        <p class="subtitle">Start your AI-powered health journey today</p>
+
+        <form id="signupForm" novalidate>
+            <div class="mb-3">
+                <label for="name" class="form-label fw-semibold">Full Name</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border:2px solid var(--gray-200); border-right:none; border-radius:var(--radius) 0 0 var(--radius);">
+                        <i class="bi bi-person text-muted"></i>
+                    </span>
+                    <input type="text" class="form-control border-start-0" id="name" placeholder="John Doe" required style="border-left:none;">
+                </div>
+                <div class="invalid-feedback" id="nameError"></div>
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label fw-semibold">Email Address</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border:2px solid var(--gray-200); border-right:none; border-radius:var(--radius) 0 0 var(--radius);">
+                        <i class="bi bi-envelope text-muted"></i>
+                    </span>
+                    <input type="email" class="form-control border-start-0" id="email" placeholder="you@example.com" required style="border-left:none;">
+                </div>
+                <div class="invalid-feedback" id="emailError"></div>
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label fw-semibold">Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border:2px solid var(--gray-200); border-right:none; border-radius:var(--radius) 0 0 var(--radius);">
+                        <i class="bi bi-lock text-muted"></i>
+                    </span>
+                    <input type="password" class="form-control border-start-0" id="password" placeholder="Min. 6 characters" required style="border-left:none;">
+                </div>
+                <div class="invalid-feedback" id="passwordError"></div>
+            </div>
+
+            <div class="mb-4">
+                <label for="confirmPassword" class="form-label fw-semibold">Confirm Password</label>
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0" style="border:2px solid var(--gray-200); border-right:none; border-radius:var(--radius) 0 0 var(--radius);">
+                        <i class="bi bi-lock-fill text-muted"></i>
+                    </span>
+                    <input type="password" class="form-control border-start-0" id="confirmPassword" placeholder="Repeat your password" required style="border-left:none;">
+                </div>
+                <div class="invalid-feedback" id="confirmPasswordError"></div>
+            </div>
+
+            <button type="submit" class="btn btn-auth" id="signupBtn">
+                <i class="bi bi-person-plus me-2"></i>Create Account
+            </button>
+        </form>
+
+        <div class="text-center mt-4">
+            <p class="text-muted mb-0">Already have an account? <a href="{{ url_for('auth.login_page') }}" class="fw-semibold">Sign In</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.getElementById('signupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const name = document.getElementById('name').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const btn = document.getElementById('signupBtn');
+
+    // Reset errors
+    document.querySelectorAll('.invalid-feedback').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.form-control').forEach(el => el.classList.remove('is-invalid'));
+
+    // Validate
+    let hasError = false;
+    if (!name) {
+        document.getElementById('name').classList.add('is-invalid');
+        document.getElementById('nameError').textContent = 'Name is required.';
+        document.getElementById('nameError').style.display = 'block';
+        hasError = true;
+    }
+    if (!email || !email.includes('@')) {
+        document.getElementById('email').classList.add('is-invalid');
+        document.getElementById('emailError').textContent = 'Please enter a valid email.';
+        document.getElementById('emailError').style.display = 'block';
+        hasError = true;
+    }
+    if (!password || password.length < 6) {
+        document.getElementById('password').classList.add('is-invalid');
+        document.getElementById('passwordError').textContent = 'Password must be at least 6 characters.';
+        document.getElementById('passwordError').style.display = 'block';
+        hasError = true;
+    }
+    if (password !== confirmPassword) {
+        document.getElementById('confirmPassword').classList.add('is-invalid');
+        document.getElementById('confirmPasswordError').textContent = 'Passwords do not match.';
+        document.getElementById('confirmPasswordError').style.display = 'block';
+        hasError = true;
+    }
+    if (hasError) return;
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Creating account...';
+
+    try {
+        const { status, data } = await apiCall('/api/auth/signup', 'POST', { name, email, password });
+
+        if (data.success) {
+            showToast('Account created! Redirecting to dashboard...');
+            setTimeout(() => { window.location.href = '/dashboard'; }, 1000);
+        } else {
+            showToast(data.message || 'Signup failed.', true);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Account';
+        }
+    } catch (err) {
+        showToast('An error occurred. Please try again.', true);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-person-plus me-2"></i>Create Account';
+    }
+});
+</script>
+{% endblock %}
