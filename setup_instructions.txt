@@ -1,140 +1,349 @@
-===============================================
-  ShifaBot - AI Medical Diagnosis Expert System
-  Setup Instructions
-===============================================
+# 🩺 ShifaBot – AI Medical Diagnosis Expert System
 
-PREREQUISITES:
---------------
-1. Python 3.10 or higher
-2. MySQL Server 8.0 or higher
-3. pip (Python package manager)
+ShifaBot is an **AI-powered Medical Diagnosis Expert System** built with **Python Flask**, **MySQL**, and the **Groq API (Llama 3.3 70B)**. It enables users to receive AI-assisted health recommendations through a symptom form or chatbot, while administrators can manage users, consultations, reports, and analytics from a dedicated dashboard.
 
+---
 
-STEP 1: Create MySQL Database
-------------------------------
-Open MySQL terminal or phpMyAdmin and run:
+## ✨ Features
 
-    CREATE DATABASE shifabot_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+### 👤 Patient Features
 
-Or run the schema file directly:
+- 🔐 User Registration & Login
+- 💬 AI-powered chatbot consultation
+- 📝 Symptom-based diagnosis form
+- 🤖 AI-generated medical recommendations
+- 🥗 Personalized food and medication suggestions
+- 📄 Download and print medical reports
+- 📚 Consultation history
+- 📱 Responsive healthcare-themed interface
 
-    mysql -u root < backend/database/schema.sql
+### 👨‍💼 Admin Features
 
-Note: This project is configured for NO MySQL password.
-If your MySQL has a password, edit backend/.env and set DB_PASSWORD=yourpassword
+- 📊 Analytics dashboard
+- 👥 User management
+- 📋 Consultation management
+- 📑 Medical report management
+- 📈 Daily diagnosis statistics
+- 🩺 Most common symptoms visualization
+- 👶 Age group distribution charts
+- 🔍 Search, activate/deactivate, and delete users
 
+---
 
-STEP 2: Get a Groq API Key
----------------------------
-1. Go to https://console.groq.com/keys
-2. Create an account and generate a new API key
-3. Copy the key
+# 🛠️ Tech Stack
 
-Then edit backend/.env and replace the value:
-    GROQ_API_KEY=your-groq-api-key-here
+### Backend
 
+- 🐍 Python
+- ⚡ Flask
+- 🗄️ MySQL
+- 🔐 Flask-Login
+- 🔒 Flask-Bcrypt
+- 🌐 Flask-CORS
+- 📄 xhtml2pdf
 
-STEP 3: Install Python Dependencies
-------------------------------------
-Open a terminal and run:
+### Frontend
 
-    cd "e:\Medical Diagnosis System\backend"
-    pip install -r requirements.txt
+- HTML5
+- CSS3
+- Bootstrap
+- JavaScript
 
+### AI
 
-STEP 4: Run the Application
-----------------------------
-From the backend folder, run:
+- 🤖 Groq API
+- 🧠 Llama 3.3 70B
 
-    python run.py
+---
 
-The application will start at:
-    http://localhost:5000
+# 📋 Prerequisites
 
-Database tables are created automatically on first run.
-The admin account is also seeded automatically.
+Before running the project, ensure you have installed:
 
+- 🐍 Python 3.10 or later
+- 🗄️ MySQL Server 8.0 or later
+- 📦 pip (Python Package Manager)
 
-STEP 5: Access the Application
--------------------------------
-Open your browser and navigate to:
-    http://localhost:5000
+---
 
-REGULAR USERS:
-  1. Click "Get Started" to create an account
-  2. Login with your credentials
-  3. Start a diagnosis using the Form or Chatbot
-  4. View reports and consultation history
+# 🚀 Installation
 
-ADMIN PANEL:
-  Login with pre-seeded admin credentials:
-    Email:    hanzlasial690@gmail.com
-    Password: 654321
+## 1️⃣ Clone the Repository
 
-  Then click the "Admin" link in the navbar or go to:
-    http://localhost:5000/admin
+```bash
+git clone https://github.com/your-username/shifabot.git
+```
 
-  Admin features:
-  - Dashboard with analytics charts (symptoms, age groups, daily diagnoses)
-  - User management (view, search, activate/deactivate, delete)
-  - Consultation management (view all, search, view AI recommendations, delete)
-  - Report management (view, download PDF, print, delete)
+```bash
+cd shifabot
+```
 
+---
 
-PROJECT STRUCTURE:
-------------------
-backend/
-  app/
-    __init__.py            - Flask app factory, Blueprint registration
-    config.py              - Configuration (DB, secret key, Groq API)
-    extensions.py          - Flask extensions (SQLAlchemy, Login, Bcrypt, CORS)
-    seed_admin.py          - Auto-creates admin account on first run
-    models/
-      user.py              - User model (role, is_active, auth)
-      consultation.py      - Consultation model (diagnosis records)
-    routes/
-      auth.py              - Signup, login, logout (with is_active check)
-      dashboard.py         - Patient dashboard
-      diagnosis.py         - Form & chatbot AI diagnosis
-      reports.py           - Medical report view & PDF download
-      history.py           - Consultation history
-      admin.py             - Admin panel (users, consultations, reports, analytics)
-    services/
-      groq_service.py      - Groq AI integration (Llama 3.3 70B)
-    utils/
-      decorators.py        - login_required_api, admin_required decorators
-  database/
-    schema.sql             - MySQL database schema
-  .env                     - Environment variables (Groq key, DB config)
-  .env.example             - Example environment file
-  requirements.txt         - Python dependencies
-  run.py                   - Application entry point
+## 2️⃣ Create the Database
 
-frontend/
-  static/
-    css/style.css          - Main stylesheet (healthcare theme)
-    css/admin.css          - Admin panel stylesheet
-    js/main.js             - General JavaScript utilities
-    js/chatbot.js          - Chatbot interface logic
-    js/report.js           - Report print/download utilities
-    js/admin.js            - Admin panel JavaScript
-    img/logo.png           - ShifaBot logo
-  templates/
-    base.html              - Base layout (navbar, footer, scripts)
-    index.html             - Landing page
-    auth/                  - Login & signup pages
-    dashboard/             - Patient dashboard
-    diagnosis/             - Form & chatbot diagnosis pages
-    reports/               - Medical report & PDF template
-    history/               - Consultation history page
-    admin/                 - Admin panel pages (dashboard, users, consultations, reports)
+Open MySQL Terminal or phpMyAdmin and execute:
 
+```sql
+CREATE DATABASE shifabot_db
+CHARACTER SET utf8mb4
+COLLATE utf8mb4_unicode_ci;
+```
 
-TROUBLESHOOTING:
-----------------
-- "Access denied for user": Check MySQL credentials in .env
-- "ModuleNotFoundError": Run pip install -r requirements.txt again
-- "GROQ_API_KEY is not configured": Add your Groq API key to .env
-- Port 5000 in use: Change the port in run.py (e.g., port=5001)
-- PDF issues: xhtml2pdf is pure Python, no extra system dependencies needed
-- Admin can't login: Make sure the server started at least once to seed the account
+Or import the provided schema:
+
+```bash
+mysql -u root < backend/database/schema.sql
+```
+
+> **Note:**  
+> This project is configured for a MySQL server **without a password**.  
+> If your MySQL server requires one, update the `.env` file:
+
+```env
+DB_PASSWORD=your_password
+```
+
+---
+
+## 3️⃣ Configure the Groq API
+
+1. Visit:
+
+```
+https://console.groq.com/keys
+```
+
+2. Create an account.
+
+3. Generate an API key.
+
+4. Open:
+
+```text
+backend/.env
+```
+
+Replace:
+
+```env
+GROQ_API_KEY=your-groq-api-key-here
+```
+
+with your actual API key.
+
+---
+
+## 4️⃣ Install Dependencies
+
+Navigate to the backend directory:
+
+```bash
+cd backend
+```
+
+Install the required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 5️⃣ Run the Application
+
+Start the Flask server:
+
+```bash
+python run.py
+```
+
+The application will be available at:
+
+```
+http://localhost:5000
+```
+
+On the first run, the application automatically:
+
+- ✅ Creates database tables
+- ✅ Seeds the default administrator account
+
+---
+
+# 🌐 Access the Application
+
+Open your browser and visit:
+
+```
+http://localhost:5000
+```
+
+---
+
+# 👤 Patient Workflow
+
+1. Click **Get Started**
+2. Create an account
+3. Log in
+4. Choose:
+
+- 📝 Symptom Form
+- 💬 AI Chatbot
+
+5. Receive AI-generated diagnosis suggestions
+6. Download or print the medical report
+7. View consultation history
+
+---
+
+# 👨‍💼 Admin Panel
+
+Login using the default administrator credentials:
+
+**Email**
+
+```text
+hanzlasial690@gmail.com
+```
+
+**Password**
+
+```text
+654321
+```
+
+Open:
+
+```
+http://localhost:5000/admin
+```
+
+### Admin Dashboard Includes
+
+- 📊 Analytics Dashboard
+- 👥 User Management
+- 📋 Consultation Management
+- 📄 Report Management
+- 📈 Diagnosis Charts
+- 🩺 Symptom Statistics
+- 👶 Age Distribution
+
+---
+
+# 📁 Project Structure
+
+```text
+ShifaBot/
+│
+├── backend/
+│   ├── app/
+│   │   ├── models/
+│   │   ├── routes/
+│   │   ├── services/
+│   │   ├── utils/
+│   │   ├── config.py
+│   │   ├── extensions.py
+│   │   ├── seed_admin.py
+│   │   └── __init__.py
+│   │
+│   ├── database/
+│   │   └── schema.sql
+│   │
+│   ├── .env
+│   ├── .env.example
+│   ├── requirements.txt
+│   └── run.py
+│
+├── frontend/
+│   ├── static/
+│   │   ├── css/
+│   │   ├── js/
+│   │   └── img/
+│   │
+│   └── templates/
+│       ├── auth/
+│       ├── dashboard/
+│       ├── diagnosis/
+│       ├── reports/
+│       ├── history/
+│       └── admin/
+│
+└── README.md
+```
+
+---
+
+# 📦 Key Components
+
+| Component | Description |
+|------------|-------------|
+| 🔐 Authentication | User registration, login, logout |
+| 🤖 Groq Service | AI diagnosis using Llama 3.3 70B |
+| 📝 Diagnosis | Symptom form & chatbot |
+| 📄 Reports | Generate, print, and download PDF reports |
+| 📚 History | Patient consultation history |
+| 👥 Admin | Manage users, reports, consultations |
+| 📊 Analytics | Dashboard with charts and statistics |
+
+---
+
+# 🛡️ Security Features
+
+- 🔐 Password hashing with Flask-Bcrypt
+- 👤 Role-based authentication
+- 🚫 Admin-only routes
+- 🔑 Environment variable configuration
+- 🌐 Secure session management
+
+---
+
+# 📊 Analytics Dashboard
+
+The administrator dashboard includes:
+
+- 📈 Daily Diagnosis Trends
+- 🩺 Most Common Symptoms
+- 👶 Age Group Distribution
+- 👥 User Statistics
+- 📋 Consultation Statistics
+
+---
+
+# 🧰 Troubleshooting
+
+| Issue | Solution |
+|--------|----------|
+| 🚫 Access denied for MySQL | Verify your database credentials in `.env` |
+| 📦 ModuleNotFoundError | Run `pip install -r requirements.txt` |
+| 🔑 GROQ_API_KEY not configured | Add your API key to `.env` |
+| 🚪 Port 5000 already in use | Change the port in `run.py` |
+| 📄 PDF generation issues | Ensure `xhtml2pdf` is installed |
+| 👨‍💼 Admin login fails | Start the server once to seed the admin account |
+
+---
+
+# 🚀 Future Improvements
+
+- 📅 Doctor appointment booking
+- 🏥 Nearby hospital locator
+- 💊 Medicine database integration
+- 🌍 Multi-language support
+- 📱 Mobile application
+- 📈 AI prediction confidence scores
+- 🧠 Medical image analysis
+- ☁️ Cloud deployment
+- 📧 Email notifications
+- 🔔 Push notifications
+
+---
+
+# 👨‍💻 Author
+
+**Muhammad Hanzla**
+
+Python Developer | Flask Developer | AI Integration | REST APIs
+
+---
+
+⭐ If you found this project useful, consider giving it a **star** on GitHub!
